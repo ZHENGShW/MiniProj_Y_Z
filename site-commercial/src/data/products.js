@@ -24,7 +24,7 @@ export const products = [
   { id: 17, name: "Clavier mécanique", category: "Électronique", price: 85, quantity: 5, restockThreshold: 5 },
 
   // 🔹 Maison
-  { id: 18, name: "Lampe de bureau", category: "Maison", price: 40, quantity: 16, restockThreshold: 10 },
+  { id: 18, name: "Lampe de bureau", category: "Maison", price: 40, quantity: 8, restockThreshold: 10 },
   { id: 19, name: "Chaise", category: "Maison", price: 75, quantity: 2, restockThreshold: 5 },
   { id: 20, name: "Tapis", category: "Maison", price: 55, quantity: 7, restockThreshold: 4 },
   { id: 21, name: "Rideaux", category: "Maison", price: 35, quantity: 12, restockThreshold: 6 },
