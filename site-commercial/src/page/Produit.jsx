@@ -10,7 +10,7 @@ export default function Produit() {
 
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [query, setQuery] = useState("");
-  const [priceRange, setPriceRange] = useState([0, maxPrice]); // valeur par défaut min-max
+  const [priceRange, setPriceRange] = useState([minPrice, maxPrice]); // valeur par défaut min-max
 
   // Catégories uniques
   const categories = useMemo(() => {
@@ -28,6 +28,12 @@ export default function Produit() {
       return matchCategory && matchText && matchPrice;
     });
   }, [items, selectedCategory, query, priceRange]);
+
+  const isFiltered =
+    selectedCategory !== "all" ||
+    query.trim() !== "" ||
+    priceRange[1] !== maxPrice;
+
 
   return (
     <div className="p-10">
@@ -79,18 +85,26 @@ export default function Produit() {
         </div>
 
         {/* Bouton réinitialiser */}
-        {(selectedCategory !== "all" || query.trim() !== "" || priceRange[0] !== minPrice || priceRange[1] !== maxPrice) && (
-          <button
-            onClick={() => {
-              setSelectedCategory("all");
-              setQuery("");
-              setPriceRange([minPrice, maxPrice]);
-            }}
-            className="self-start md:self-center bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-xl transition"
-          >
-            Réinitialiser
-          </button>
-        )}
+        <button
+          type="button"
+          disabled={!isFiltered}
+          onClick={() => {
+            if (!isFiltered) return;
+            setSelectedCategory("all");
+            setQuery("");
+            setPriceRange([minPrice, maxPrice]);
+          }}
+          aria-disabled={!isFiltered}
+          className={
+            `self-start md:self-center px-5 py-2 rounded-xl transition ` +
+            (isFiltered
+              ? `bg-red-500 hover:bg-red-600 text-white`
+              : `bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300`)
+          }
+          title={isFiltered ? "Réinitialiser les filtres" : "Aucun filtre appliqué"}
+        >
+          Réinitialiser
+        </button>
       </div>
 
       {/* Tableau produits */}

@@ -1,62 +1,58 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import { products as seed } from "../data/products";
 
-// ——————————————————————————————————————— //
-//  CONTEXTE GLOBAL DE L’APPLICATION
-// ——————————————————————————————————————— //
 const AppStateContext = createContext(null);
 
 export function AppStateProvider({ children }) {
-  // Copie des données de base (stock initial)
-  const [items, setItems] = useState(() => seed.map(p => ({ ...p })));
+  // Copie immuable des données initiales (stock)
+  const [items, setItems] = useState(() => seed.map((p) => ({ ...p })));
 
-  // Historique des commandes : tableau d’objets { id, date, total, produits }
+  // Historique des commandes : { id, date, total, products: [{id,name,price,qty,subtotal}] }
   const [orders, setOrders] = useState([]);
 
-  // Nombre total de commandes
+  // Compteur simple (dérivé direct)
   const ordersCount = orders.length;
 
-  // —— Fonction principale : appliquer une commande —— //
+  //Appliquer une commande à partir d’une map { productId: qty }
   const applyOrder = (quantitiesMap) => {
     let total = 0;
     const orderedProducts = [];
 
-    // Met à jour le stock et calcule le total de la commande
-    setItems(prev =>
-      prev.map(p => {
-        const orderedQty = Number(quantitiesMap[p.id] || 0);
-        if (orderedQty > 0) {
-          const newStock = Math.max(0, p.quantity - orderedQty);
-          const subtotal = orderedQty * p.price;
-          total += subtotal;
+    // 1) Calculer le prochain stock et la commande résultante (sans side-effects React)
+    const nextItems = items.map((p) => {
+      const orderedQty = Number(quantitiesMap[p.id] || 0);
+      if (orderedQty > 0) {
+        const newStock = Math.max(0, p.quantity - orderedQty);
+        const subtotal = orderedQty * p.price;
+        total += subtotal;
 
-          orderedProducts.push({
-            id: p.id,
-            name: p.name,
-            price: p.price,
-            qty: orderedQty,
-            subtotal,
-          });
+        orderedProducts.push({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          qty: orderedQty, // quantité vendue (à utiliser pour les stats)
+          subtotal,
+        });
 
-          return { ...p, quantity: newStock };
-        }
-        return p;
-      })
-    );
+        return { ...p, quantity: newStock };
+      }
+      return p;
+    });
 
-    // Enregistre la commande dans l’historique
+    // 2) Si au moins un article a été commandé : enregistrer l’opération
     if (orderedProducts.length > 0) {
-      const order = {
-        id: Date.now(),
-        date: new Date().toISOString(),
-        total,
-        products: orderedProducts,
-      };
-      setOrders(prev => [...prev, order]);
+      setItems(nextItems);
+      setOrders((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          date: new Date().toISOString(),
+          total,
+          products: orderedProducts,
+        },
+      ]);
     }
   };
-
-  // —— Dérivés utiles pour les stats —— //
 
   // Chiffre d’affaires cumulé
   const totalRevenue = useMemo(
@@ -64,32 +60,45 @@ export function AppStateProvider({ children }) {
     [orders]
   );
 
-  // Produits les plus vendus
+  //Top produits vendus (agrégation par ID)
+
   const topProducts = useMemo(() => {
-    const salesMap = {};
+    const salesById = new Map();
+
     for (const o of orders) {
-      for (const p of o.products) {
-        salesMap[p.name] = (salesMap[p.name] || 0) + p.qty;
+      for (const line of o.products ?? []) {
+        const id = line.id;
+        const name = line.name;
+        const inc = Number(line.qty || 0);
+
+        const prev = salesById.get(id) ?? { id, name, qty: 0 };
+        prev.qty += inc;
+        salesById.set(id, prev);
       }
     }
-    return Object.entries(salesMap)
-      .map(([name, qty]) => ({ name, qty }))
+
+    return Array.from(salesById.values())
       .sort((a, b) => b.qty - a.qty)
       .slice(0, 3);
   }, [orders]);
 
-  // —— Valeur du contexte —— //
+  // Valeur fournie par le contexte (mémoïsée pour éviter les re-rendus inutiles)
   const value = useMemo(
     () => ({
+      // état
       items,
-      setItems,
       orders,
+
+      // dérivés
       ordersCount,
       totalRevenue,
       topProducts,
+
+      // actions
+      setItems, // exposé si besoin d’outils d’admin
       applyOrder,
     }),
-    [items, orders, totalRevenue, topProducts]
+    [items, orders, ordersCount, totalRevenue, topProducts]
   );
 
   return (
@@ -99,10 +108,11 @@ export function AppStateProvider({ children }) {
   );
 }
 
-// Hook d’accès
+// Hook d’accès pratique au contexte (avec garde)
 export function useAppState() {
   const ctx = useContext(AppStateContext);
-  if (!ctx)
+  if (!ctx) {
     throw new Error("useAppState must be used within <AppStateProvider>");
+  }
   return ctx;
 }
