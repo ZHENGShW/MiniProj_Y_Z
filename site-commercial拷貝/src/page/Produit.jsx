@@ -4,19 +4,19 @@ import { useAppState } from "../context/AppState";
 export default function Produit() {
   const { items } = useAppState();
 
-  // Prix min et max de tous les produits
-  const minPrice = Math.min(...items.map((p) => p.price));
-  const maxPrice = Math.max(...items.map((p) => p.price));
-
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [query, setQuery] = useState("");
-  const [priceRange, setPriceRange] = useState([0, maxPrice]); // valeur par défaut min-max
+  const [priceRange, setPriceRange] = useState([0, 1000]); // valeur par défaut min-max
 
   // Catégories uniques
   const categories = useMemo(() => {
     const set = new Set(items.map((p) => p.category));
     return ["all", ...Array.from(set).sort()];
   }, [items]);
+
+  // Prix min et max de tous les produits
+  const minPrice = Math.min(...items.map((p) => p.price));
+  const maxPrice = Math.max(...items.map((p) => p.price));
 
   // Filtrage produits
   const filteredProducts = useMemo(() => {
@@ -35,63 +35,63 @@ export default function Produit() {
 
       {/* Bloc filtres */}
       <div className="flex flex-col md:flex-row items-start md:items-center gap-8 mb-8 bg-gray-50 p-8 rounded-2xl shadow-lg">
-        {/* Catégorie */}
-        <div className="flex flex-col md:w-64">
-          <label className="text-sm text-gray-600 mb-1">Catégorie</label>
-          <select
-            className="border p-2 rounded-lg min-w-full shadow-sm focus:ring focus:ring-blue-300"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-          >
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c === "all" ? "Toutes les catégories" : c}
-              </option>
-            ))}
-          </select>
-        </div>
+  {/* Catégorie */}
+  <div className="flex flex-col md:w-64">
+    <label className="text-sm text-gray-600 mb-1">Catégorie</label>
+    <select
+      className="border p-2 rounded-lg min-w-full shadow-sm focus:ring focus:ring-blue-300"
+      value={selectedCategory}
+      onChange={(e) => setSelectedCategory(e.target.value)}
+    >
+      {categories.map((c) => (
+        <option key={c} value={c}>
+          {c === "all" ? "Toutes les catégories" : c}
+        </option>
+      ))}
+    </select>
+  </div>
 
-        {/* Recherche */}
-        <div className="flex-grow flex flex-col md:mx-4">
-          <label className="text-sm text-gray-600 mb-1">Recherche</label>
-          <input
-            type="text"
-            placeholder="Nom ou catégorie..."
-            className="border p-2 rounded-lg w-full shadow-sm focus:ring focus:ring-blue-300"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
+  {/* Recherche */}
+  <div className="flex-grow flex flex-col md:mx-4">
+    <label className="text-sm text-gray-600 mb-1">Recherche</label>
+    <input
+      type="text"
+      placeholder="Nom ou catégorie..."
+      className="border p-2 rounded-lg w-full shadow-sm focus:ring focus:ring-blue-300"
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
+    />
+  </div>
 
-        {/* Slider prix */}
-        <div className="flex flex-col w-full md:w-72">
-          <label className="text-sm text-gray-600 mb-2">
-            Prix : {priceRange[0]}€ - {priceRange[1]}€
-          </label>
-          <input
-            type="range"
-            min={minPrice}
-            max={maxPrice}
-            value={priceRange[1]}
-            onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
-            className="w-full h-2 bg-gray-300 rounded-full accent-blue-500 hover:accent-blue-600"
-          />
-        </div>
+  {/* Slider prix */}
+  <div className="flex flex-col w-full md:w-72">
+    <label className="text-sm text-gray-600 mb-2">
+      Prix : {priceRange[0]}€ - {priceRange[1]}€
+    </label>
+    <input
+      type="range"
+      min={minPrice}
+      max={maxPrice}
+      value={priceRange[1]}
+      onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+      className="w-full h-2 bg-gray-300 rounded-full accent-blue-500 hover:accent-blue-600"
+    />
+  </div>
 
-        {/* Bouton réinitialiser */}
-        {(selectedCategory !== "all" || query.trim() !== "" || priceRange[0] !== minPrice || priceRange[1] !== maxPrice) && (
-          <button
-            onClick={() => {
-              setSelectedCategory("all");
-              setQuery("");
-              setPriceRange([minPrice, maxPrice]);
-            }}
-            className="self-start md:self-center bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-xl transition"
-          >
-            Réinitialiser
-          </button>
-        )}
-      </div>
+  {/* Bouton réinitialiser */}
+  {(selectedCategory !== "all" || query.trim() !== "" || priceRange[0] !== minPrice || priceRange[1] !== maxPrice) && (
+    <button
+      onClick={() => {
+        setSelectedCategory("all");
+        setQuery("");
+        setPriceRange([minPrice, maxPrice]);
+      }}
+      className="self-start md:self-center bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-xl transition"
+    >
+      Réinitialiser
+    </button>
+  )}
+</div>
 
       {/* Tableau produits */}
       <div className="overflow-x-auto rounded-xl shadow">
